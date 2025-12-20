@@ -22,13 +22,28 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
+
 		command = command[:len(command)-1]
+
+		keywords := map[string]int{
+			"type": 1,
+			"echo": 1,
+			"exit": 1,
+		}
+
 		switch {
 		case command == "exit":
 			os.Exit(0)
 			return
 		case command[:4] == "echo":
 			fmt.Println(command[5:])
+		case command[:4] == "type":
+			keyword := command[5:]
+			if _, ok := keywords[keyword]; ok {
+				fmt.Printf("%s is a shell builtin\n", keyword)
+			} else {
+				fmt.Printf("%s: not found\n", keyword)
+			}
 		default:
 			fmt.Println(command + ": command not found")
 		}
