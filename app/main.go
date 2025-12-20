@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,14 +60,16 @@ func main() {
 		}
 
 		switch {
-		case len(command) < 4:
-			fmt.Println(command + ": command not found")
 		case command == "exit":
 			os.Exit(0)
 			return
-		case command[:4] == "echo":
+		case len(command) >= 4 && command[:4] == "echo":
+			if len(command) <= 4 {
+				fmt.Println("Usage: $ echo [command]")
+				break
+			}
 			fmt.Println(command[5:])
-		case command[:4] == "type":
+		case len(command) >= 4 && command[:4] == "type":
 			if len(command) <= 4 {
 				fmt.Printf(": not found\n")
 				break
@@ -80,7 +83,20 @@ func main() {
 				fmt.Printf("%s: not found\n", keyword)
 			}
 		default:
-			fmt.Println(command + ": command not found")
+			args := strings.Fields(command)
+			isExecutable, _ := isExecutableFromPath(args[0])
+			if !isExecutable {
+				fmt.Println(args[0] + ": command not found")
+				continue
+			}
+			var out strings.Builder
+			cmd := exec.Command(args[0], args[1:]...)
+			cmd.Stdout = &out
+			err := cmd.Run()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Print(out.String())
 		}
 	}
 }
