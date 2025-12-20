@@ -4,13 +4,40 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Print
 
+func isExecutableFromPath(commandName string) (bool, string) {
+	path, _ := exec.LookPath(commandName)
+	if path != "" {
+		return true, path
+	}
+
+	pathString := os.Getenv("PATH")
+	pathDirs := strings.Split(pathString, string(os.PathListSeparator))
+
+	for _, pathDir := range pathDirs {
+		entries, err := os.ReadDir(pathDir)
+		if err != nil {
+			continue
+		}
+
+		for _, entry := range entries {
+			fullPath := filepath.Join(pathDir, entry.Name())
+			if !entry.IsDir() && entry.Name() == commandName && entry.Type()&0111 != 0 {
+				return true, fullPath
+			}
+		}
+	}
+	return false, ""
+}
+
 func main() {
-	// TODO: Uncomment the code below to pass the first stage
 	for {
 		fmt.Print("$ ")
 		//var input string
@@ -32,15 +59,23 @@ func main() {
 		}
 
 		switch {
+		case len(command) < 4:
+			fmt.Println(command + ": command not found")
 		case command == "exit":
 			os.Exit(0)
 			return
 		case command[:4] == "echo":
 			fmt.Println(command[5:])
 		case command[:4] == "type":
+			if len(command) <= 4 {
+				fmt.Printf(": not found\n")
+				break
+			}
 			keyword := command[5:]
 			if _, ok := keywords[keyword]; ok {
 				fmt.Printf("%s is a shell builtin\n", keyword)
+			} else if isExecutable, fileName := isExecutableFromPath(keyword); isExecutable {
+				fmt.Printf("%s is %s\n", keyword, fileName)
 			} else {
 				fmt.Printf("%s: not found\n", keyword)
 			}
