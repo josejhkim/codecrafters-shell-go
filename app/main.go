@@ -57,9 +57,17 @@ func main() {
 			"type": 1,
 			"echo": 1,
 			"exit": 1,
+			"pwd":  1,
 		}
 
 		switch {
+		case command == "pwd":
+			cwd, err := os.Getwd()
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Println(cwd)
 		case command == "exit":
 			os.Exit(0)
 			return
