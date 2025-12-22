@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-// Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
-var _ = fmt.Print
-
 func main() {
 	for {
 		fmt.Print("$ ")
@@ -144,12 +141,18 @@ func parseArgsWithQuotes(command string, index int) []string {
 	currArg := ""
 	for index < len(command) {
 		curr := index
-		if command[curr] != '\'' {
-			for index < len(command) && (command[index] != ' ' && command[index] != '\'') {
+		switch command[curr] {
+		case '"':
+			curr++
+			index = curr
+			for index < len(command) && command[index] != '"' {
 				index++
 			}
-			currArg += command[curr:index]
-		} else {
+			if index < len(command) {
+				currArg += command[curr:index]
+			}
+			index++
+		case '\'':
 			curr++
 			index = curr
 			for index < len(command) && command[index] != '\'' {
@@ -159,6 +162,11 @@ func parseArgsWithQuotes(command string, index int) []string {
 				currArg += command[curr:index]
 			}
 			index++
+		default:
+			for index < len(command) && (command[index] != ' ' && command[index] != '\'' && command[index] != '"') {
+				index++
+			}
+			currArg += command[curr:index]
 		}
 		if (index >= len(command) || command[index] == ' ') && len(currArg) > 0 {
 			args = append(args, currArg)
