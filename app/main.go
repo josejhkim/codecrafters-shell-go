@@ -37,6 +37,8 @@ func main() {
 		}
 
 		switch {
+		case len(command) <= 0:
+			continue
 		case command == "pwd":
 			cwd, err := os.Getwd()
 			if err != nil {
@@ -48,6 +50,15 @@ func main() {
 			// change directory
 			// to the provided absolute path
 			absPath := command[3:]
+			if len(absPath) >= 1 && absPath[:1] == "~" {
+				homePath, err := os.UserHomeDir()
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				} else {
+					absPath = homePath + absPath[1:]
+				}
+			}
 			err := os.Chdir(absPath)
 			if err != nil {
 				fmt.Printf("cd: %s: No such file or directory\n", absPath)
