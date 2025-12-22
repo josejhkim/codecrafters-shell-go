@@ -91,7 +91,8 @@ func main() {
 				fmt.Printf("%s: not found\n", keyword)
 			}
 		default:
-			cmdName := strings.Fields(command)[0]
+			args := parseArgsWithQuotes(command, 0)
+			cmdName := args[0]
 			isExecutable, _ := isExecutableFromPath(cmdName)
 			if !isExecutable {
 				fmt.Println(cmdName + ": command not found")
@@ -99,8 +100,7 @@ func main() {
 			}
 			var out strings.Builder
 			var errs strings.Builder
-			args := parseArgsWithQuotes(command, len(cmdName)+1)
-			cmd := exec.Command(cmdName, args...)
+			cmd := exec.Command(cmdName, args[1:]...)
 			cmd.Stdout = &out
 			cmd.Stderr = &errs
 			err := cmd.Run()
