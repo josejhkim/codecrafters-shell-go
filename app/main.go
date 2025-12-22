@@ -13,31 +13,6 @@ import (
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Print
 
-func isExecutableFromPath(commandName string) (bool, string) {
-	path, _ := exec.LookPath(commandName)
-	if path != "" {
-		return true, path
-	}
-
-	pathString := os.Getenv("PATH")
-	pathDirs := strings.Split(pathString, string(os.PathListSeparator))
-
-	for _, pathDir := range pathDirs {
-		entries, err := os.ReadDir(pathDir)
-		if err != nil {
-			continue
-		}
-
-		for _, entry := range entries {
-			fullPath := filepath.Join(pathDir, entry.Name())
-			if !entry.IsDir() && entry.Name() == commandName && entry.Type()&0111 != 0 {
-				return true, fullPath
-			}
-		}
-	}
-	return false, ""
-}
-
 func main() {
 	for {
 		fmt.Print("$ ")
@@ -58,6 +33,7 @@ func main() {
 			"echo": 1,
 			"exit": 1,
 			"pwd":  1,
+			"cd":   1,
 		}
 
 		switch {
@@ -68,6 +44,14 @@ func main() {
 				os.Exit(1)
 			}
 			fmt.Println(cwd)
+		case command[:2] == "cd":
+			// change directory
+			// to the provided absolute path
+			absPath := command[3:]
+			err := os.Chdir(absPath)
+			if err != nil {
+				fmt.Printf("cd: %s: No such file or directory\n", absPath)
+			}
 		case command == "exit":
 			os.Exit(0)
 			return
@@ -107,4 +91,29 @@ func main() {
 			fmt.Print(out.String())
 		}
 	}
+}
+
+func isExecutableFromPath(commandName string) (bool, string) {
+	path, _ := exec.LookPath(commandName)
+	if path != "" {
+		return true, path
+	}
+
+	pathString := os.Getenv("PATH")
+	pathDirs := strings.Split(pathString, string(os.PathListSeparator))
+
+	for _, pathDir := range pathDirs {
+		entries, err := os.ReadDir(pathDir)
+		if err != nil {
+			continue
+		}
+
+		for _, entry := range entries {
+			fullPath := filepath.Join(pathDir, entry.Name())
+			if !entry.IsDir() && entry.Name() == commandName && entry.Type()&0111 != 0 {
+				return true, fullPath
+			}
+		}
+	}
+	return false, ""
 }
