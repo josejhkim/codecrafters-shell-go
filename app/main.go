@@ -71,7 +71,15 @@ func main() {
 				fmt.Println("Usage: $ echo [command]")
 				break
 			}
-			fmt.Println(command[5:])
+			args := parseArgsWithQuotes(command, len("echo")+1)
+			for idx, arg := range args {
+				fmt.Print(arg)
+				if idx < len(arg)-1 {
+					fmt.Print(" ")
+				}
+			}
+			fmt.Println("")
+
 		case len(command) >= 4 && command[:4] == "type":
 			if len(command) <= 4 {
 				fmt.Printf(": not found\n")
@@ -86,14 +94,15 @@ func main() {
 				fmt.Printf("%s: not found\n", keyword)
 			}
 		default:
-			args := strings.Fields(command)
-			isExecutable, _ := isExecutableFromPath(args[0])
+			cmdName := strings.Fields(command)[0]
+			isExecutable, _ := isExecutableFromPath(cmdName)
 			if !isExecutable {
-				fmt.Println(args[0] + ": command not found")
+				fmt.Println(cmdName + ": command not found")
 				continue
 			}
 			var out strings.Builder
-			cmd := exec.Command(args[0], args[1:]...)
+			args := parseArgsWithQuotes(command, len(cmdName)+1)
+			cmd := exec.Command(cmdName, args...)
 			cmd.Stdout = &out
 			err := cmd.Run()
 			if err != nil {
@@ -127,4 +136,38 @@ func isExecutableFromPath(commandName string) (bool, string) {
 		}
 	}
 	return false, ""
+}
+
+func parseArgsWithQuotes(command string, index int) []string {
+	args := make([]string, 0)
+
+	currArg := ""
+	for index < len(command) {
+		curr := index
+		if command[curr] != '\'' {
+			for index < len(command) && (command[index] != ' ' && command[index] != '\'') {
+				index++
+			}
+			currArg += command[curr:index]
+		} else {
+			curr++
+			index = curr
+			for index < len(command) && command[index] != '\'' {
+				index++
+			}
+			if index < len(command) {
+				currArg += command[curr:index]
+			}
+			index++
+		}
+		if (index >= len(command) || command[index] == ' ') && len(currArg) > 0 {
+			args = append(args, currArg)
+			currArg = ""
+		}
+		for index < len(command) && command[index] == ' ' {
+			index++
+		}
+	}
+
+	return args
 }
