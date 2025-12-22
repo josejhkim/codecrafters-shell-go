@@ -98,12 +98,15 @@ func main() {
 				continue
 			}
 			var out strings.Builder
+			var errs strings.Builder
 			args := parseArgsWithQuotes(command, len(cmdName)+1)
 			cmd := exec.Command(cmdName, args...)
 			cmd.Stdout = &out
+			cmd.Stderr = &errs
 			err := cmd.Run()
 			if err != nil {
 				log.Fatal(err)
+				fmt.Println(errs)
 			}
 			fmt.Print(out.String())
 		}
@@ -146,27 +149,32 @@ func parseArgsWithQuotes(command string, index int) []string {
 			curr++
 			index = curr
 			for index < len(command) && command[index] != '"' {
+				// if command[index] == '\\' {
+				// 	index++
+				// }
+				currArg += string(command[index])
 				index++
-			}
-			if index < len(command) {
-				currArg += command[curr:index]
 			}
 			index++
 		case '\'':
 			curr++
 			index = curr
 			for index < len(command) && command[index] != '\'' {
+				// if command[index] == '\\' {
+				// 	index++
+				// }
+				currArg += string(command[index])
 				index++
-			}
-			if index < len(command) {
-				currArg += command[curr:index]
 			}
 			index++
 		default:
 			for index < len(command) && (command[index] != ' ' && command[index] != '\'' && command[index] != '"') {
+				if command[index] == '\\' {
+					index++
+				}
+				currArg += string(command[index])
 				index++
 			}
-			currArg += command[curr:index]
 		}
 		if (index >= len(command) || command[index] == ' ') && len(currArg) > 0 {
 			args = append(args, currArg)
