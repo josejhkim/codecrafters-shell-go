@@ -138,7 +138,16 @@ func isExecutableFromPath(commandName string) (bool, string) {
 	return false, ""
 }
 
+var escapableInDoubleQuotes = map[rune]int{
+	'"':  1,
+	'\\': 1,
+	'$':  1,
+	'`':  1,
+	'\n': 1,
+}
+
 func parseArgsWithQuotes(command string, index int) []string {
+	runes := []rune(command)
 	args := make([]string, 0)
 
 	currArg := ""
@@ -149,9 +158,11 @@ func parseArgsWithQuotes(command string, index int) []string {
 			curr++
 			index = curr
 			for index < len(command) && command[index] != '"' {
-				// if command[index] == '\\' {
-				// 	index++
-				// }
+				if command[index] == '\\' {
+					if _, ok := escapableInDoubleQuotes[runes[index+1]]; ok {
+						index++
+					}
+				}
 				currArg += string(command[index])
 				index++
 			}
