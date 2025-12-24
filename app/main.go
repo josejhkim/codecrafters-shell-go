@@ -37,24 +37,23 @@ func main() {
 		command = command[:len(command)-1]
 
 		var append bool = false
-		var appendToErr bool = false
-		var appendOutputFile string
+		var toErr bool = false
 
 		var redirect bool = false
-		var redirectToErr bool = false
-		var redirectOutputFile string
+
+		var outputFile string
 
 		if strings.Contains(command, ">>") {
 			append = true
-			appendToErr = strings.Contains(command, "2>>")
+			toErr = strings.Contains(command, "2>>")
 			separationIndex := strings.Index(command, ">>")
-			appendOutputFile = strings.TrimSpace(command[separationIndex+2:])
+			outputFile = strings.TrimSpace(command[separationIndex+2:])
 			command = strings.TrimSpace(command[:separationIndex-1])
 		} else if strings.Contains(command, ">") {
 			redirect = true
-			redirectToErr = strings.Contains(command, "2>")
+			toErr = strings.Contains(command, "2>")
 			separationIndex := strings.Index(command, ">")
-			redirectOutputFile = strings.TrimSpace(command[separationIndex+1:])
+			outputFile = strings.TrimSpace(command[separationIndex+1:])
 			command = strings.TrimSpace(command[:separationIndex-1])
 		}
 
@@ -142,26 +141,24 @@ func main() {
 			} else {
 				fmt.Print(out.String())
 			}
-		} else if append {
-			f, err := os.OpenFile(appendOutputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if appendToErr {
-				_, err = f.Write([]byte(errs.String()))
-			} else {
-				_, err = f.Write([]byte(out.String()))
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
 		} else {
-			var err error
-			if redirectToErr {
-				err = os.WriteFile(redirectOutputFile, []byte(errs.String()), 0777)
+			var flag int
+			if append {
+				flag = os.O_APPEND | os.O_CREATE | os.O_WRONLY
+			} else {
+				flag = os.O_TRUNC | os.O_CREATE | os.O_WRONLY
+			}
+			f, err := os.OpenFile(outputFile, flag, 0777)
+
+			if err != nil {
+				fmt.Println("Error while opening file?")
+				log.Fatal(err)
+			}
+			if toErr {
+				_, err = f.Write([]byte(errs.String()))
 				fmt.Print(out.String())
 			} else {
-				err = os.WriteFile(redirectOutputFile, []byte(out.String()), 0777)
+				_, err = f.Write([]byte(out.String()))
 				fmt.Print(errs.String())
 			}
 			if err != nil {
