@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,11 +10,22 @@ import (
 )
 
 func main() {
+	keywords := map[string]int{
+		"type": 1,
+		"echo": 1,
+		"exit": 1,
+		"pwd":  1,
+		"cd":   1,
+	}
+
 	for {
 		fmt.Print("$ ")
-		//var input string
-		//fmt.Scanln(&input)
-		//fmt.Printf("%s: command not found \n", input)
+
+		// for stdout
+		var out strings.Builder
+
+		// for stderr
+		var errs strings.Builder
 
 		command, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
@@ -25,24 +35,30 @@ func main() {
 
 		command = command[:len(command)-1]
 
-		keywords := map[string]int{
-			"type": 1,
-			"echo": 1,
-			"exit": 1,
-			"pwd":  1,
-			"cd":   1,
+		var redirect bool = false
+		var redirectOutputFile string
+
+		if strings.Contains(command, ">") {
+			redirect = true
+			separationIndex := strings.Index(command, ">")
+			redirectOutputFile = strings.TrimSpace(command[separationIndex+1:])
+			command = command[:separationIndex-1]
 		}
 
 		switch {
 		case len(command) <= 0:
 			continue
+
+		case strings.Contains(command, ">"):
+
 		case command == "pwd":
 			cwd, err := os.Getwd()
 			if err != nil {
-				fmt.Println(err)
+				out.WriteString(fmt.Sprintln(err))
 				os.Exit(1)
 			}
-			fmt.Println(cwd)
+			out.WriteString(fmt.Sprintln(cwd))
+
 		case command[:2] == "cd":
 			// change directory
 			// to the provided absolute path
@@ -58,24 +74,26 @@ func main() {
 			}
 			err := os.Chdir(absPath)
 			if err != nil {
-				fmt.Printf("cd: %s: No such file or directory\n", absPath)
+				out.WriteString(fmt.Sprintf("cd: %s: No such file or directory\n", absPath))
 			}
+
 		case command == "exit":
 			os.Exit(0)
 			return
+
 		case len(command) >= 4 && command[:4] == "echo":
 			if len(command) <= 4 {
-				fmt.Println("Usage: $ echo [command]")
+				out.WriteString(fmt.Sprintln("Usage: $ echo [command]"))
 				break
 			}
 			args := parseArgsWithQuotes(command, len("echo")+1)
 			for idx, arg := range args {
-				fmt.Print(arg)
+				out.WriteString(fmt.Sprint(arg))
 				if idx < len(arg)-1 {
-					fmt.Print(" ")
+					out.WriteString(fmt.Sprint(" "))
 				}
 			}
-			fmt.Println("")
+			out.WriteString(fmt.Sprintln(""))
 
 		case len(command) >= 4 && command[:4] == "type":
 			if len(command) <= 4 {
@@ -84,31 +102,39 @@ func main() {
 			}
 			keyword := command[5:]
 			if _, ok := keywords[keyword]; ok {
-				fmt.Printf("%s is a shell builtin\n", keyword)
+				out.WriteString(fmt.Sprintf("%s is a shell builtin\n", keyword))
 			} else if isExecutable, fileName := isExecutableFromPath(keyword); isExecutable {
-				fmt.Printf("%s is %s\n", keyword, fileName)
+				out.WriteString(fmt.Sprintf("%s is %s\n", keyword, fileName))
 			} else {
-				fmt.Printf("%s: not found\n", keyword)
+				out.WriteString(fmt.Sprintf("%s: not found\n", keyword))
 			}
+
 		default:
 			args := parseArgsWithQuotes(command, 0)
 			cmdName := args[0]
 			isExecutable, _ := isExecutableFromPath(cmdName)
 			if !isExecutable {
-				fmt.Println(cmdName + ": command not found")
-				continue
+				out.WriteString(fmt.Sprintln(cmdName + ": command not found"))
+			} else {
+				cmd := exec.Command(cmdName, args[1:]...)
+				cmd.Stdout = &out
+				cmd.Stderr = &errs
+				err := cmd.Run()
+				if err != nil {
+					// log.Fatal(err)
+					fmt.Print(errs.String())
+				}
 			}
-			var out strings.Builder
-			var errs strings.Builder
-			cmd := exec.Command(cmdName, args[1:]...)
-			cmd.Stdout = &out
-			cmd.Stderr = &errs
-			err := cmd.Run()
-			if err != nil {
-				log.Fatal(err)
-				fmt.Println(errs)
-			}
+
+		}
+
+		if !redirect {
 			fmt.Print(out.String())
+		} else {
+			err := os.WriteFile(redirectOutputFile, []byte(out.String()), 0777)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 }
