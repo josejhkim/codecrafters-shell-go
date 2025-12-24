@@ -36,13 +36,15 @@ func main() {
 		command = command[:len(command)-1]
 
 		var redirect bool = false
+		var redirectToErr bool = false
 		var redirectOutputFile string
 
 		if strings.Contains(command, ">") {
 			redirect = true
+			redirectToErr = strings.Contains(command, "2>")
 			separationIndex := strings.Index(command, ">")
 			redirectOutputFile = strings.TrimSpace(command[separationIndex+1:])
-			command = command[:separationIndex-1]
+			command = strings.TrimSpace(command[:separationIndex-1])
 		}
 
 		switch {
@@ -54,7 +56,7 @@ func main() {
 		case command == "pwd":
 			cwd, err := os.Getwd()
 			if err != nil {
-				out.WriteString(fmt.Sprintln(err))
+				errs.WriteString(fmt.Sprintln(err))
 				os.Exit(1)
 			}
 			out.WriteString(fmt.Sprintln(cwd))
@@ -66,15 +68,14 @@ func main() {
 			if len(absPath) >= 1 && absPath[:1] == "~" {
 				homePath, err := os.UserHomeDir()
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					errs.WriteString(fmt.Sprintln(err))
 				} else {
 					absPath = homePath + absPath[1:]
 				}
 			}
 			err := os.Chdir(absPath)
 			if err != nil {
-				out.WriteString(fmt.Sprintf("cd: %s: No such file or directory\n", absPath))
+				errs.WriteString(fmt.Sprintf("cd: %s: No such file or directory\n", absPath))
 			}
 
 		case command == "exit":
@@ -90,7 +91,7 @@ func main() {
 			for idx, arg := range args {
 				out.WriteString(fmt.Sprint(arg))
 				if idx < len(arg)-1 {
-					out.WriteString(fmt.Sprint(" "))
+					out.WriteString(" ")
 				}
 			}
 			out.WriteString(fmt.Sprintln(""))
@@ -119,19 +120,26 @@ func main() {
 				cmd := exec.Command(cmdName, args[1:]...)
 				cmd.Stdout = &out
 				cmd.Stderr = &errs
-				err := cmd.Run()
-				if err != nil {
-					// log.Fatal(err)
-					fmt.Print(errs.String())
-				}
+				cmd.Run()
 			}
 
 		}
 
 		if !redirect {
-			fmt.Print(out.String())
+			if errs.Len() > 0 {
+				fmt.Print(errs.String())
+			} else {
+				fmt.Print(out.String())
+			}
 		} else {
-			err := os.WriteFile(redirectOutputFile, []byte(out.String()), 0777)
+			var err error
+			if redirectToErr {
+				err = os.WriteFile(redirectOutputFile, []byte(errs.String()), 0777)
+				fmt.Print(out.String())
+			} else {
+				err = os.WriteFile(redirectOutputFile, []byte(out.String()), 0777)
+				fmt.Print(errs.String())
+			}
 			if err != nil {
 				fmt.Println(err)
 			}
