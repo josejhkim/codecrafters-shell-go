@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -35,11 +36,21 @@ func main() {
 
 		command = command[:len(command)-1]
 
+		var append bool = false
+		var appendToErr bool = false
+		var appendOutputFile string
+
 		var redirect bool = false
 		var redirectToErr bool = false
 		var redirectOutputFile string
 
-		if strings.Contains(command, ">") {
+		if strings.Contains(command, ">>") {
+			append = true
+			appendToErr = strings.Contains(command, "2>>")
+			separationIndex := strings.Index(command, ">>")
+			appendOutputFile = strings.TrimSpace(command[separationIndex+2:])
+			command = strings.TrimSpace(command[:separationIndex-1])
+		} else if strings.Contains(command, ">") {
 			redirect = true
 			redirectToErr = strings.Contains(command, "2>")
 			separationIndex := strings.Index(command, ">")
@@ -125,11 +136,24 @@ func main() {
 
 		}
 
-		if !redirect {
+		if !redirect && !append {
 			if errs.Len() > 0 {
 				fmt.Print(errs.String())
 			} else {
 				fmt.Print(out.String())
+			}
+		} else if append {
+			f, err := os.OpenFile(appendOutputFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if appendToErr {
+				_, err = f.Write([]byte(errs.String()))
+			} else {
+				_, err = f.Write([]byte(out.String()))
+			}
+			if err != nil {
+				log.Fatal(err)
 			}
 		} else {
 			var err error
@@ -141,7 +165,7 @@ func main() {
 				fmt.Print(errs.String())
 			}
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal(err)
 			}
 		}
 	}
