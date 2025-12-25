@@ -1,6 +1,10 @@
 package autocomplete
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/chzyer/readline"
+)
 
 type CodecraftersAutoCompleter struct {
 }
@@ -14,5 +18,7 @@ func (ccAutoCompleter *CodecraftersAutoCompleter) Do(line []rune, pos int) (newL
 	if pos == 3 && slices.Equal(line, exitString[:3]) {
 		return [][]rune{[]rune(exitString[3:])}, 3
 	}
-	return nil, -1
+	return [][]rune{
+		{rune(readline.CharBell)},
+	}, pos
 }

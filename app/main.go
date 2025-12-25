@@ -25,7 +25,6 @@ func main() {
 		AutoComplete: &autocomplete.CodecraftersAutoCompleter{},
 		Prompt:       "$ ",
 	})
-
 	if err != nil {
 		panic(err)
 	}
@@ -37,12 +36,13 @@ func main() {
 
 		// for stderr
 		var errs strings.Builder
-
 		command, err := rl.Readline()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
+
+		command = strings.TrimSpace(command)
 
 		var append bool = false
 		var toErr bool = false
