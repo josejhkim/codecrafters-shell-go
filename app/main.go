@@ -1,13 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/chzyer/readline"
+	"github.com/codecrafters-io/shell-starter-go/app/internal/autocomplete"
 )
 
 func main() {
@@ -19,22 +21,28 @@ func main() {
 		"cd":   1,
 	}
 
-	for {
-		fmt.Print("$ ")
+	rl, err := readline.NewEx(&readline.Config{
+		AutoComplete: &autocomplete.CodecraftersAutoCompleter{},
+		Prompt:       "$ ",
+	})
 
+	if err != nil {
+		panic(err)
+	}
+	defer rl.Close()
+
+	for {
 		// for stdout
 		var out strings.Builder
 
 		// for stderr
 		var errs strings.Builder
 
-		command, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		command, err := rl.Readline()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
-
-		command = command[:len(command)-1]
 
 		var append bool = false
 		var toErr bool = false
