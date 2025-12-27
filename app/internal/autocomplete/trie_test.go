@@ -25,7 +25,7 @@ func TestTrie(t *testing.T) {
 			wordsWithoutPrefix[key[len(prefix)+1:]] = 1
 		}
 
-		res := rootNode.GetPrefixedWords("str")
+		res := rootNode.GetPrefixedWords("str", false)
 
 		if len(res) != len(words) {
 			t.Errorf("Only %d prefixes instead of %d", len(res), len(words))

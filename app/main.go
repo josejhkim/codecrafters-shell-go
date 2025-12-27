@@ -22,10 +22,12 @@ func main() {
 	}
 
 	autoCompleter := autocomplete.NewCodecraftersAutoCompleter()
+
 	rl, err := readline.NewEx(&readline.Config{
-		AutoComplete: autoCompleter,
-		Prompt:       "$ ",
+		Prompt: "$ ",
 	})
+
+	rl.Config.SetListener(autoCompleter.CompleteExecutable)
 	if err != nil {
 		panic(err)
 	}
@@ -108,12 +110,12 @@ func main() {
 			}
 			args := parseArgsWithQuotes(command, len("echo")+1)
 			for idx, arg := range args {
-				out.WriteString(fmt.Sprint(arg))
+				out.WriteString(arg)
 				if idx < len(arg)-1 {
 					out.WriteString(" ")
 				}
 			}
-			out.WriteString(fmt.Sprintln(""))
+			out.WriteString("\n")
 
 		case len(command) >= 4 && command[:4] == "type":
 			if len(command) <= 4 {

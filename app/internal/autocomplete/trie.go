@@ -1,5 +1,7 @@
 package autocomplete
 
+import "slices"
+
 type TrieNode struct {
 	Char     rune
 	IsEnd    bool
@@ -32,7 +34,7 @@ func (root *TrieNode) AddWord(word string) {
 	curr.IsEnd = true
 }
 
-func (root *TrieNode) GetPrefixedWords(prefix string) [][]rune {
+func (root *TrieNode) GetPrefixedWords(prefix string, withPrefix bool) [][]rune {
 	curr := *root
 	for _, c := range prefix {
 		if child, okay := curr.Children[c]; okay {
@@ -43,9 +45,26 @@ func (root *TrieNode) GetPrefixedWords(prefix string) [][]rune {
 	}
 
 	currString := []rune{}
-	ret := [][]rune{}
-	ret = curr.DFS(currString, ret)
 
+	if withPrefix {
+		currString = []rune(prefix)
+	}
+
+	ret := [][]rune{}
+	if curr.IsEnd {
+		wordFound := make([]rune, len(currString))
+		copy(wordFound, currString)
+
+		ret = append(ret, wordFound)
+	}
+
+	ret = curr.DFS(currString, ret)
+	slices.SortFunc(ret, func(a, b []rune) int {
+		if string(a) < string(b) {
+			return -1
+		}
+		return 1
+	})
 	return ret
 }
 
@@ -54,10 +73,13 @@ func (node *TrieNode) DFS(curr []rune, rets [][]rune) [][]rune {
 		curr = append(curr, c)
 
 		if child.IsEnd {
-			rets = append(rets, curr)
+			wordFound := make([]rune, len(curr))
+			copy(wordFound, curr)
+			rets = append(rets, wordFound)
 		}
 
 		rets = child.DFS(curr, rets)
+
 		curr = curr[:len(curr)-1]
 	}
 	return rets
