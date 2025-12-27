@@ -21,8 +21,9 @@ func main() {
 		"cd":   1,
 	}
 
+	autoCompleter := autocomplete.NewCodecraftersAutoCompleter()
 	rl, err := readline.NewEx(&readline.Config{
-		AutoComplete: &autocomplete.CodecraftersAutoCompleter{},
+		AutoComplete: autoCompleter,
 		Prompt:       "$ ",
 	})
 	if err != nil {
