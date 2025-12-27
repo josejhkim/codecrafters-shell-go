@@ -2,6 +2,7 @@ package autocomplete
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -28,7 +29,7 @@ func NewCodecraftersAutoCompleter() *CodecraftersAutoCompleter {
 }
 
 func (ccAutoCompleter *CodecraftersAutoCompleter) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), false)
+	_, searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), false)
 
 	if len(searchResults) > 0 {
 		return searchResults, len(string(line))
@@ -50,13 +51,19 @@ func (ccAutoCompleter *CodecraftersAutoCompleter) CompleteExecutable(line []rune
 			line = line[:pos-1]
 		}
 
-		searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), true)
+		longestPrefix, searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), true)
 		if len(searchResults) == 0 {
 			return append(line, readline.CharBell), pos + 1, true
 		} else if len(searchResults) == 1 {
 			searchResult := searchResults[0]
 			return append(searchResult, ' '), len(searchResult) + 1, true
 		} else {
+			if !slices.Equal(line, longestPrefix) {
+				newLine = longestPrefix
+				newPos = len(longestPrefix)
+				ok = true
+				return
+			}
 			if !secondTab {
 				newLine = append(line, readline.CharBell)
 				newPos = len(string(newLine))

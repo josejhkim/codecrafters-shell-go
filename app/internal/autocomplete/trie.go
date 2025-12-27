@@ -34,20 +34,22 @@ func (root *TrieNode) AddWord(word string) {
 	curr.IsEnd = true
 }
 
-func (root *TrieNode) GetPrefixedWords(prefix string, withPrefix bool) [][]rune {
+func (root *TrieNode) GetPrefixedWords(prefix string, withPrefix bool) ([]rune, [][]rune) {
 	curr := *root
+	longestPrefix := prefix
+
 	for _, c := range prefix {
 		if child, okay := curr.Children[c]; okay {
 			curr = *child
 		} else {
-			return nil
+			return nil, nil
 		}
 	}
 
 	currString := []rune{}
 
 	if withPrefix {
-		currString = []rune(prefix)
+		currString = []rune(longestPrefix)
 	}
 
 	ret := [][]rune{}
@@ -65,7 +67,39 @@ func (root *TrieNode) GetPrefixedWords(prefix string, withPrefix bool) [][]rune 
 		}
 		return 1
 	})
-	return ret
+
+	if len(ret) > 1 {
+		minLen := len(ret[0])
+		for _, l := range ret {
+			minLen = min(minLen, len(l))
+		}
+
+		prefixString := ""
+
+		for i := 0; i < minLen; i++ {
+			c := ret[0][i]
+			allSame := true
+			for j := 0; j < len(ret); j++ {
+				if ret[j][i] != c {
+					allSame = false
+					break
+				}
+			}
+			if allSame {
+				prefixString += string(c)
+			} else {
+				break
+			}
+		}
+
+		if withPrefix {
+			longestPrefix = prefixString
+		} else {
+			longestPrefix = prefix + prefixString
+		}
+	}
+
+	return []rune(longestPrefix), ret
 }
 
 func (node *TrieNode) DFS(curr []rune, rets [][]rune) [][]rune {
