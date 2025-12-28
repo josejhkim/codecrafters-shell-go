@@ -108,16 +108,18 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 
 	case "echo":
 		if len(cmdAndArgs) <= 1 {
-			stdout.Write([]byte("Usage: $ echo [command]"))
+			fmt.Fprint(stdout, "Usage: $ echo [command]")
 			break
 		}
+		length := len(cmdAndArgs[1:])
 		for idx, arg := range cmdAndArgs[1:] {
-			stdout.Write([]byte(arg))
-			if idx < len(arg)-1 {
-				stdout.Write([]byte(" "))
+			if idx < length-1 {
+				fmt.Fprint(stdout, arg)
+				fmt.Fprint(stdout, " ")
+			} else {
+				fmt.Fprintln(stdout, arg)
 			}
 		}
-		stdout.Write([]byte("\n"))
 
 	case "type":
 		if len(cmdAndArgs) <= 1 {
