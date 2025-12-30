@@ -10,6 +10,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/autocomplete"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/execute"
+	"github.com/codecrafters-io/shell-starter-go/app/internal/history"
 )
 
 func main() {
@@ -31,6 +32,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
+		history.AppendToHistory(command)
 
 		stdoutDest := os.Stdout
 		stderrDest := os.Stderr

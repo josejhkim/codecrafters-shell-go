@@ -8,15 +8,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/codecrafters-io/shell-starter-go/app/internal/history"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/parsing"
 )
 
 var Builtins = map[string]int{
-	"type": 1,
-	"echo": 1,
-	"exit": 1,
-	"pwd":  1,
-	"cd":   1,
+	"type":    1,
+	"echo":    1,
+	"exit":    1,
+	"pwd":     1,
+	"history": 1,
+	"cd":      1,
 }
 
 func ExecuteUserInput(command string, waitForFinish bool, stdin io.Reader, stdoutDest, stderrDest io.Writer) *exec.Cmd {
@@ -85,7 +87,8 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 			os.Exit(1)
 		}
 		fmt.Fprintln(stdout, cwd)
-
+	case "history":
+		history.PrintHistory(&stdout)
 	case "cd":
 		// change directory
 		// to the provided absolute path
