@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/codecrafters-io/shell-starter-go/app/internal/history"
@@ -88,7 +89,16 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 		}
 		fmt.Fprintln(stdout, cwd)
 	case "history":
-		history.PrintHistory(&stdout)
+		if len(cmdAndArgs) == 1 {
+			history.PrintHistory(&stdout, history.GetHistoryLength())
+		} else {
+			limit, err := strconv.Atoi(cmdAndArgs[1])
+			if err != nil {
+				fmt.Fprintln(stderr, err.Error())
+			} else {
+				history.PrintHistory(&stdout, limit)
+			}
+		}
 	case "cd":
 		// change directory
 		// to the provided absolute path
