@@ -1,5 +1,0 @@
-echo 1234
-echo 5678
-echo abcd
-echo efgh
-history -a test.txt
