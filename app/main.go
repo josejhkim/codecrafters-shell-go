@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	history.InitializeHistory()
+	// history.InitializeHistory()
 	listener := listener.NewListener()
 
 	rl, err := readline.NewEx(&readline.Config{

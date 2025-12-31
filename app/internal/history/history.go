@@ -9,6 +9,7 @@ import (
 
 var history []string
 var index int = 0
+var lastAppendedHistory int = 0
 
 func InitializeHistory() {
 	fileName := os.Getenv("HISTFILE")
@@ -94,8 +95,12 @@ func SaveHistoryToFile(fileName string, append bool) bool {
 		return false
 	}
 	defer f.Close()
-	for _, h := range history {
+	for i, h := range history {
+		if i < lastAppendedHistory {
+			continue
+		}
 		f.WriteString(h + "\n")
 	}
+	lastAppendedHistory = len(history)
 	return true
 }
