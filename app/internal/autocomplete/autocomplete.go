@@ -40,45 +40,41 @@ func (ccAutoCompleter *CodecraftersAutoCompleter) Do(line []rune, pos int) (newL
 	}, pos
 }
 
-func (ccAutoCompleter *CodecraftersAutoCompleter) CompleteExecutable(line []rune, pos int, key rune) (newLine []rune, newPos int, ok bool) {
-	if key == readline.CharTab {
-		line = line[:len(line)-1]
-		pos--
+func (ccAutoCompleter *CodecraftersAutoCompleter) AutoComplete(line []rune, pos int) (newLine []rune, newPos int, ok bool) {
+	line = line[:len(line)-1]
+	pos--
 
-		secondTab := false
-		if line[pos-1] == readline.CharBell {
-			secondTab = true
-			line = line[:pos-1]
-		}
+	secondTab := false
+	if line[pos-1] == readline.CharBell {
+		secondTab = true
+		line = line[:pos-1]
+	}
 
-		longestPrefix, searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), true)
-		if len(searchResults) == 0 {
-			return append(line, readline.CharBell), pos + 1, true
-		} else if len(searchResults) == 1 {
-			searchResult := searchResults[0]
-			return append(searchResult, ' '), len(searchResult) + 1, true
-		} else {
-			if !slices.Equal(line, longestPrefix) {
-				newLine = longestPrefix
-				newPos = len(longestPrefix)
-				ok = true
-				return
-			}
-			if !secondTab {
-				newLine = append(line, readline.CharBell)
-				newPos = len(string(newLine))
-				ok = true
-				return
-			}
-			var retString strings.Builder
-			for _, searchResult := range searchResults {
-				retString.WriteString(string(searchResult) + "  ")
-			}
-			fmt.Println("")
-			fmt.Println(retString.String())
-			return line, len(line), true
-		}
+	longestPrefix, searchResults := ccAutoCompleter.trieRoot.GetPrefixedWords(string(line), true)
+	if len(searchResults) == 0 {
+		return append(line, readline.CharBell), pos + 1, true
+	} else if len(searchResults) == 1 {
+		searchResult := searchResults[0]
+		return append(searchResult, ' '), len(searchResult) + 1, true
 	} else {
-		return line, pos, false
+		if !slices.Equal(line, longestPrefix) {
+			newLine = longestPrefix
+			newPos = len(longestPrefix)
+			ok = true
+			return
+		}
+		if !secondTab {
+			newLine = append(line, readline.CharBell)
+			newPos = len(string(newLine))
+			ok = true
+			return
+		}
+		var retString strings.Builder
+		for _, searchResult := range searchResults {
+			retString.WriteString(string(searchResult) + "  ")
+		}
+		fmt.Println("")
+		fmt.Println(retString.String())
+		return line, len(line), true
 	}
 }

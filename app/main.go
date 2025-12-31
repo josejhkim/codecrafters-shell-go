@@ -8,19 +8,20 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
-	"github.com/codecrafters-io/shell-starter-go/app/internal/autocomplete"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/execute"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/history"
+	"github.com/codecrafters-io/shell-starter-go/app/internal/listener"
 )
 
 func main() {
-	autoCompleter := autocomplete.NewCodecraftersAutoCompleter()
+	history.InitializeHistory()
+	listener := listener.NewListener()
 
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt: "$ ",
 	})
 
-	rl.Config.SetListener(autoCompleter.CompleteExecutable)
+	rl.Config.SetListener(listener.Listen)
 	if err != nil {
 		panic(err)
 	}

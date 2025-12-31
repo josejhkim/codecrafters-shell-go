@@ -91,12 +91,35 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 	case "history":
 		if len(cmdAndArgs) == 1 {
 			history.PrintHistory(&stdout, history.GetHistoryLength())
-		} else {
+		} else if len(cmdAndArgs) == 2 {
 			limit, err := strconv.Atoi(cmdAndArgs[1])
 			if err != nil {
 				fmt.Fprintln(stderr, err.Error())
 			} else {
 				history.PrintHistory(&stdout, limit)
+			}
+		} else {
+			flag := cmdAndArgs[1]
+			fileName := cmdAndArgs[2]
+
+			switch flag {
+			case "-r":
+				success := history.AppendToHistoryFromFile(fileName)
+				if !success {
+					fmt.Fprintln(stderr, "error while appending to history file")
+				}
+			case "-w":
+				success := history.SaveHistoryToFile(fileName, false)
+				if !success {
+					fmt.Fprintln(stderr, "error while writing to history file")
+				}
+			case "-a":
+				success := history.SaveHistoryToFile(fileName, true)
+				if !success {
+					fmt.Fprintln(stderr, "error while appending to history file")
+				}
+			default:
+				fmt.Fprintln(stderr, "flag not recognized")
 			}
 		}
 	case "cd":
@@ -117,6 +140,7 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 		}
 
 	case "exit":
+		history.SaveHistory()
 		os.Exit(0)
 
 	case "echo":
