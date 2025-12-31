@@ -21,7 +21,7 @@ func InitializeHistory() {
 func SaveHistory() {
 	fileName := os.Getenv("HISTFILE")
 	if len(fileName) > 0 {
-		SaveHistoryToFile(fileName, false)
+		SaveHistoryToFile(fileName, true)
 	}
 }
 

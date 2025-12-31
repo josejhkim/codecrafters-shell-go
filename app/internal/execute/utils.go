@@ -140,7 +140,7 @@ func RunCommand(cmdAndArgs []string, waitForFinish bool, stdin io.Reader, stdout
 		}
 
 	case "exit":
-		// history.SaveHistory()
+		history.SaveHistory()
 		os.Exit(0)
 
 	case "echo":
