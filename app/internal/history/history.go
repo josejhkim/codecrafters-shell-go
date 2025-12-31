@@ -15,6 +15,7 @@ func InitializeHistory() {
 	fileName := os.Getenv("HISTFILE")
 	if len(fileName) > 0 {
 		AppendToHistoryFromFile(fileName)
+		lastAppendedHistory = len(history)
 	}
 }
 
