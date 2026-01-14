@@ -1,10 +1,9 @@
-Progress
+## POSIX-compliant shell written in Golang
 
-- [x] Basics
-- [x] Navigation
-- [x] Quoting
-- [x] Redirection
-- [x] Autocompletion
-- [x] Pipelines
-- [x] History
-- [x] History Persistence
+Supports
+* History persistance
+* Command output redirection
+* Command autocomplete
+* Pipelined command execution
+
+along with other basic shell features
